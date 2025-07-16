@@ -109,9 +109,18 @@ void Client::login(const client::Packet *packet)
 	LoginData data;
 	data.net_id = net_id;
 	data.net_type = net_type;
-
+	
 	this->requests->add(&data, [&](const vector<Player*> &loaded) -> void
 	{
-		this->login_do(loaded[0], &data);
+		// Если гарантируется, что !loaded.empty(), то можно обернуть проверку в ifdef
+		// #ifdef DEBUG
+		if (loaded.empty())
+		{
+			logger->debug("Login failed: no player data loaded for net_id {}", net_id);
+			this->send(server::Login(server::Login::Status::FAILED));
+			return;
+		}
+		// #endif
+		this->login_do(loaded.front(), &data); // замена [0] на более явную операцию front
 	});
 }
