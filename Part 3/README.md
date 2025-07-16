@@ -14,3 +14,14 @@
 
 # Решение
 
+*[см. коммит 0102e75 "feat: Implement required select queries"](https://github.com/Divinecrusade/rockstone/commit/0102e75e0d6342c9dc470b35eb50d3c496a1ab0e)*
+
+Использовалась локальная версия MySQL Community Server 9.30
+
+В файле [init.sql](/init.sql) представлены запросы инициализации БД и требуемой таблицы.
+
+Хранимая процедура генерации данных (таблица заполнена 50 000 записями со случайными данными: именами из пула 15 имен, кодами девайсов от 0 до 29 и датами логинов с 07-07-2025 по 16-07-2025) приведена в файле [populate_table_players.sql](/populate_table_players.sql)
+
+При необходимости, дамп таблицы `players` есть в файле [players_dump.sql](/players_dump.sql)
+
+Непосредственные запросы выборки сохранены в файле [select.sql](/select.sql)
