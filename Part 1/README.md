@@ -108,7 +108,7 @@ Client::Client(gsl::not_null<IO*> io):
 ### 2-й участок кода. Разыменование пустого указателя
 
 Указатель `Player*` `Client::player` по умолчанию равен `nullptr`, при этом в конструкторе его значение не изменяется (я предполагаю, что значение этого поля меняют методы, которые не приведены в этом файле). 
-Это значит, что, нет гарантии не `nullptr` значений при попытки выполнения, например, следующих операций в методе `Client::buy(const server::Packet &packet)`:
+Это значит, что нет гарантии не `nullptr` значений при попытки выполнения, например, следующих операций в методе `Client::buy(const server::Packet &packet)`:
 ```C++
 this->player->balance->deduct(item_id);	// потенциальная попытка разыменование nullptr
 this->player->inventory->add(item_id);	// потенциальная попытка разыменования nullptr
@@ -172,8 +172,8 @@ this->requests->add(&data, [&](const vector<Player*> &loaded) -> void
 
 ### Прочие предложения по улучшению
 
-- **несоответствие типов:** в прототипе указано `Client::login(const server::Packet &packet)` (файл `Client.h`), хотя в реализации - `Client::login(const client::Packet *packet)`, то есть типы аргумента метода не сходятся. Это либо опечатка, либо перегрузка, не попавшая в прототип, либо переопределение макросом или `using`/`typedef`.
+- **несоответствие типов:** в прототипе указано `Client::login(const server::Packet &packet)` (файл `Client.h`), хотя в реализации - `Client::login(const client::Packet *packet)` (файл `Client.cpp`), то есть типы аргумента метода не сходятся. Это либо опечатка, либо перегрузка, не попавшая в прототип, либо переопределение имени типа с помощью `using`/`typedef`.
 - **Rule of zero:** правило позволяет убрать явное определение  `~Client() = default` (при чём стоит добавить `Client() = delete` или просто обернуть `IO* Client::io` в `gsl::not_null<IO*> Client::io`)
-- **noexcept:** следует отметить методы, никогда не выбрасывающие исключение (`Client::disconnect() const`, `Client::send(const server::Packet &packet) const`, `Client::get_ip() const`)
+- **noexcept:** следует отметить методы, никогда не выбрасывающие исключение (`Client::disconnect() const`, `Client::send(const server::Packet &packet) const`, `Client::get_ip() const`) ключевым словом `noexcept`
 - **магические числа:** числа в выражених `packet.S(0)`, `packet.I(0)`, `packet->L(0)` и пр. рекомендуется заменить на константы времени компиляции (`constexpr`) или (лучше всего) перечисления
 - **шаблон логирования:** по коду часто встречаются строки, одинаково начинающиеся, например, с `"Client {}"`. Их можно заменить на именованную константу (`constexpr std::string_view`) и/или метод, собирающий строку для логирования
