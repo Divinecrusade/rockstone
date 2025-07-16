@@ -13,3 +13,5 @@ CREATE TABLE players(
 
 CREATE INDEX idx_device ON players(`device`);
 CREATE INDEX idx_login_time ON players(`login_time`);
+
+CALL populate_table_players(50000); -- см. файл populate_table_players.sql
