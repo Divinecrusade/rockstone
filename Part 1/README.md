@@ -13,6 +13,9 @@
 
 ## Решение
 
+Rule of zero (деструктор по умолчанию, можно опустить)
+добавить ключевые слова noexcept
+
 ### 1-й участок кода. Потенциальное нарушение инварианта класса `Client::io != nullptr`
 
 Методы `Client::get_ip() const`, `Client::disconnect() const`, `Client::send(const server::Packet &packet)` используют селектор членов класса (оператор `->`, или оператор указателя на член класса). К примеру тело метода `Client::get_ip() const` выглядит следующим образом:
@@ -81,10 +84,9 @@ void Client::send(const server::Packet &packet) const
 }
 ```
 
-Метод `assert` реализован так, что вызывает завершение программы при истинности выражение только при условии, что определен флаг DEBUG. Соответственно, в релизной версии программы все вызову функции `assert` будут опущены.
+Метод `assert` реализован так, что вызывает завершение программы при истинности выражение только при условии, что определен флаг DEBUG. Соответственно, в релизной версии программы все вызовы функции `assert` будут опущены.
 
-Это позволит отловить во время тестирования возможные разименования пустого указателя и при этом не повлияет на итоговую производительность.
-
+Это позволит отловить во время тестирования возможные разыменования пустого указателя и при этом не повлияет на итоговую производительность.
 
 #### 3-й подход. Использование `gsl::not_null<IO*>`
 
@@ -105,3 +107,51 @@ Client::Client(gsl::not_null<IO*> io):
 Это добавляет проверку времени исполнения при инициализации фактического параметра. Если `io == nullptr`, то будет вызвано немедленное завершение работы программы (`std::terminate`).
 
 Такой подход лучше использования утверждений, поскольку он накладывает ограничение на уровне интерфейса (объявлении конструктора).
+
+### 2-й участок кода. Разыменование пустого указателя
+
+Указатель `Player*` `Client::player` по умолчанию равен `nullptr`, при этом в конструкторе его значение не изменяется (я предполагаю, что значение этого поля меняют методы, которые не приведены в этом файле). 
+Это значит, что, нет гарантии не `nullptr` значений при попытки выполнения, например, следующих операций в методе `Client::buy(const server::Packet &packet)`:
+```C++
+	this->player->balance->deduct(item_id);	// потенциальная попытка разыменование nullptr
+	this->player->inventory->add(item_id);	// потенциальная попытка разыменования nullptr
+```
+
+Логика методов, использующих этот указатель, не позволяет добавить if-guard (проверку на nullptr) без изменения семантики методов. Следовательно, эти методы **должны быть** вызваны после инициализации `Client::player`. Наиболее разумным выходом из положения без перепроектирования класса является добавление утверждений:
+
+```C++
+#include <cassert>
+
+#define ASSERT_CLIENT_PLAYER_IS_NOT_NULL assert(this->player != nullptr);
+
+void Client::params_set(const server::Packet &packet) const
+{
+	ASSERT_CLIENT_PLAYER_IS_NOT_NULL
+
+	string params = packet.S(0);
+	if (params.empty())
+		return;
+
+	this->player->params->set(params);
+
+	logger->info("Client {} params set", this->player->id);
+}
+
+void Client::buy(const server::Packet &packet)
+{
+	ASSERT_CLIENT_PLAYER_IS_NOT_NULL
+
+	uint32_t item_id = packet.I(0);
+
+	if (!this->player->balance->can_afford(item_id))
+	{
+		logger->warning("Client {} can't afford item {}", this->player->id, item_id);
+		return;
+	}
+
+	this->player->balance->deduct(item_id);
+	this->player->inventory->add(item_id);
+
+	logger->info("Client {} bought item {}", this->player->id, item_id);
+}
+```
