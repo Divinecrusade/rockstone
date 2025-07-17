@@ -14,7 +14,9 @@
 
 # Решение
 
-*[см. коммит 0102e75 "feat: Implement required select queries"](https://github.com/Divinecrusade/rockstone/commit/0102e75e0d6342c9dc470b35eb50d3c496a1ab0e)*
+*[см. коммит 0102e75 "feat: Implement required select queries"](https://github.com/Divinecrusade/rockstone/commit/0102e75e0d6342c9dc470b35eb50d3c496a1ab0e)*<br/>
+*[см. коммит 2ad7653
+"style: Remove redument signs '*' in the query's commentary"](https://github.com/Divinecrusade/rockstone/commit/2ad76531f8a861faf25aca776284dde955fe63c5)*
 
 Использовалась локальная версия MySQL Community Server 9.30
 
@@ -25,3 +27,5 @@
 При необходимости, дамп таблицы `players` есть в файле [players_dump.sql](/Part%203/players_dump.sql)
 
 Непосредственные запросы выборки сохранены в файле [select.sql](/Part%203/select.sql)
+
+*P.S. Во втором запросе делитель рассчитывается  агрегатной функцией `COUNT(DISTINCT DATE(login_time))`, а не заменяется константой `7.` (требуемое количество дней), поскольку возможны случаи когда никто не заходил в игру за день (например, были технические работы).*
