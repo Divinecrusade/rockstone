@@ -223,6 +223,44 @@ namespace test
 			}
 			return true;
 		}
+	
+		static bool test_thread_unsafe_append()
+		{
+			constexpr int thread_count = 8;
+			constexpr int actions_per_thread = 1000;
+
+			TopTracker tracker(std::chrono::seconds{60}, thread_count * actions_per_thread);
+
+			std::atomic<bool> failed = false;
+			std::vector<std::thread> threads;
+
+			for (int i = 0; i < thread_count; ++i)
+			{
+				threads.emplace_back([&, i]
+				{
+					for (int j = 0; j < actions_per_thread; ++j)
+					{
+						try
+						{
+							tracker.on_action(i, PlayerAction::Type::WIN);
+						}
+						catch (...)
+						{
+							failed = true;
+						}
+					}
+				});
+			}
+
+			for (auto& t : threads)
+				t.join();
+
+			// Простой sanity check: либо всё добавлено, либо нет
+			const auto& v = tracker.get_actions_view();
+			bool correct_size = v.size() == static_cast<size_t>(thread_count * actions_per_thread);
+
+			return !failed && correct_size;
+		}
 	}
 }
 
@@ -304,6 +342,11 @@ int main()
 			print_test_passed("Copy and view getters return same actions");
 		else
 			print_test_failed("Copy and view getters return different actions");
+
+		if (test_thread_unsafe_append())
+			print_test_passed("Multithreaded append worked (unsafe!)");
+		else
+			print_test_failed("Multithreaded append failed (as expected for non-threadsafe)");
 	}
 	std::clog << ">>> Ends runtime tests <<<\n";
 
