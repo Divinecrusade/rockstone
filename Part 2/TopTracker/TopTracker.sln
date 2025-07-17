@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TopTracker", "TopTracker\TopTracker.vcxproj", "{E399E72C-9877-4DB4-8427-42CE7A81E734}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTests", "UnitTests\UnitTests.vcxproj", "{E140F479-5538-435B-9D7A-7FB0E9D142A6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E399E72C-9877-4DB4-8427-42CE7A81E734} = {E399E72C-9877-4DB4-8427-42CE7A81E734}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
