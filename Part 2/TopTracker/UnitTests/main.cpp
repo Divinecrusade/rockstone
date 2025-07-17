@@ -160,7 +160,7 @@ namespace test
 				copy[1].get_player_id() == 8;
 		}
 
-		static bool test_monotonic_timestamps()
+		static bool monotonic_timestamps()
 		{
 			TopTracker tracker(std::chrono::seconds{10}, 10);
 			for (int i = 0; i < 5; ++i)
@@ -178,7 +178,7 @@ namespace test
 			return true;
 		}
 
-		static bool test_duplicate_actions_allowed()
+		static bool duplicate_actions_allowed()
 		{
 			TopTracker tracker(std::chrono::seconds{5}, 10);
 			tracker.on_action(42, PlayerAction::Type::SELL);
@@ -190,7 +190,7 @@ namespace test
 				v[1].get_type() == PlayerAction::Type::SELL;
 		}
 
-		static bool test_delete_old_actions_keeps_fresh()
+		static bool delete_old_actions_keeps_fresh()
 		{
 			using namespace std::chrono_literals;
 			TopTracker tracker(1s, 10);
@@ -205,7 +205,7 @@ namespace test
 			return v.size() == 1 && v[0].get_player_id() == 2;
 		}
 
-		static bool test_get_copy_equals_view()
+		static bool get_copy_equals_view()
 		{
 			TopTracker tracker(std::chrono::seconds{10}, 5);
 			tracker.on_action(1, PlayerAction::Type::BUY);
@@ -224,7 +224,7 @@ namespace test
 			return true;
 		}
 	
-		static bool test_thread_unsafe_append()
+		static bool thread_unsafe_append()
 		{
 			constexpr int thread_count = 8;
 			constexpr int actions_per_thread = 1000;
@@ -328,22 +328,22 @@ int main()
 		else
 			print_test_failed("Copy interface returned incorrect result");
 
-		if (test_duplicate_actions_allowed())
+		if (duplicate_actions_allowed())
 			print_test_passed("Duplicated actions are saving");
 		else
 			print_test_failed("Duplicated actions are not saving");
 
-		if (test_delete_old_actions_keeps_fresh())
+		if (delete_old_actions_keeps_fresh())
 			print_test_passed("Deletion and detection of expired actions are correct");
 		else
 			print_test_failed("Deletion and detection of expired actions are not correct");
 
-		if (test_get_copy_equals_view())
+		if (get_copy_equals_view())
 			print_test_passed("Copy and view getters return same actions");
 		else
 			print_test_failed("Copy and view getters return different actions");
 
-		if (test_thread_unsafe_append())
+		if (thread_unsafe_append())
 			print_test_passed("Multithreaded append worked (unsafe!)");
 		else
 			print_test_failed("Multithreaded append failed (as expected for non-threadsafe)");
