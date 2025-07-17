@@ -15,6 +15,7 @@ void TopTracker::on_action(PlayerAction::PlayerId player_id, PlayerAction::Type 
 {
 	assert(("Member 'actions_max_count' in TopTracker must not be zero", this->actions_max_count > 0));
 
+	std::lock_guard lock(mtx);
 	if (this->actions.size() == this->actions_max_count)
 	{
 		this->actions.pop_front();
@@ -31,6 +32,7 @@ void TopTracker::delete_old_actions() noexcept(noexcept(std::declval<PlayerActio
 
 	const PlayerAction::TimeStamp expiration_timepoint = PlayerAction::Clock::now() - this->timeout;
 
+	std::lock_guard lock(mtx);
 	const auto erase_to = std::ranges::lower_bound(
 		this->actions,
 		expiration_timepoint,
@@ -43,10 +45,10 @@ void TopTracker::delete_old_actions() noexcept(noexcept(std::declval<PlayerActio
 
 const std::deque<PlayerAction>& TopTracker::get_actions_view() const noexcept
 {
-	return this->actions;
+	return std::ignore = std::lock_guard(mtx), this->actions;
 }
 
 std::vector<PlayerAction> TopTracker::get_actions_copy() const noexcept(std::is_nothrow_copy_constructible_v<PlayerAction>)
 {
-	return this->actions | std::ranges::to<std::vector>();
+	return std::ignore = std::lock_guard(mtx), this->actions | std::ranges::to<std::vector>();
 }

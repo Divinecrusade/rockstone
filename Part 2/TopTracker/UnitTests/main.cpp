@@ -344,9 +344,9 @@ int main()
 			print_test_failed("Copy and view getters return different actions");
 
 		if (thread_unsafe_append())
-			print_test_passed("Multithreaded append worked (unsafe!)");
+			print_test_passed("Multithreaded append worked (threadsafe)");
 		else
-			print_test_failed("Multithreaded append failed (as expected for non-threadsafe)");
+			print_test_failed("Multithreaded append failed (not threadsafe)");
 	}
 	std::clog << ">>> Ends runtime tests <<<\n";
 

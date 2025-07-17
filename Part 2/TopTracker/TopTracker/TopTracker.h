@@ -4,6 +4,7 @@
 #include "PlayerAction.h"
 
 #include <deque>
+#include <mutex>
 
 class TopTracker final
 {
@@ -20,4 +21,5 @@ private:
 	std::deque<PlayerAction> actions;
 	std::chrono::seconds timeout;
 	std::size_t actions_max_count;
+	mutable std::mutex mtx;
 };
