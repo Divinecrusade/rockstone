@@ -328,6 +328,11 @@ int main()
 		else
 			print_test_failed("Copy interface returned incorrect result");
 
+		if (monotonic_timestamps())
+			print_test_passed("Actions is ordered correctly by timestamp");
+		else
+			print_test_failed("Actions is not correctly ordered by timestamp");
+
 		if (duplicate_actions_allowed())
 			print_test_passed("Duplicated actions are saving");
 		else
