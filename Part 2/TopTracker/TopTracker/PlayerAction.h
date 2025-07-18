@@ -18,15 +18,18 @@ public:
 	using TimeStamp = Clock::time_point;
 
 public:
-	static_assert(std::is_nothrow_move_constructible_v<PlayerId>);
-	PlayerAction(PlayerId player_id, Type type) noexcept(std::is_nothrow_copy_constructible_v<PlayerId>);
+	// noexcept гарантии выставлены с учётом того, что PlayerId - простой тип (стандартный целочисленный)
+	// если он будет заменён, то следует пересмотреть noexcept (для этого здесь и указан static_assert)
+	static_assert(std::is_nothrow_copy_constructible_v<PlayerId>);
 
-	[[nodiscard("Pure method")]] const PlayerId& get_player_id() const noexcept;
-	[[nodiscard("Pure method")]] const Type& get_type() const noexcept;
-	[[nodiscard("Pure method")]] const TimeStamp& get_time_stamp() const noexcept;
+	PlayerAction(PlayerId player_id, Type type) noexcept;
+
+	[[nodiscard]] PlayerId get_player_id() const noexcept;
+	[[nodiscard]] Type get_type() const noexcept;
+	[[nodiscard]] const TimeStamp& get_time_stamp() const noexcept;
 
 private:
 	PlayerId player_id;
 	Type type;
-	TimeStamp time_stamp = Clock::now();
+	TimeStamp time_stamp;
 };
