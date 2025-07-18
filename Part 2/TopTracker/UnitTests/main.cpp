@@ -11,6 +11,24 @@
 
 #include "../TopTracker/TopTracker.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+static void enable_virtual_terminal()
+{
+#ifdef _WIN32
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (hOut == INVALID_HANDLE_VALUE) return;
+
+	DWORD dwMode = 0;
+	if (!GetConsoleMode(hOut, &dwMode)) return;
+
+	dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	SetConsoleMode(hOut, dwMode);
+#endif
+}
+
 namespace test
 {
 	inline namespace stream_output
@@ -389,6 +407,7 @@ namespace test
 int main()
 {
 	using namespace test::stream_output;
+	enable_virtual_terminal();
 	const auto run_tests = [](const auto& tests)
 	{
 		const auto future_tests =
@@ -410,6 +429,9 @@ int main()
 		run_tests(TESTS);
 	}
 	std::clog << ">>> Ends runtime tests <<<\n";
+
+	std::cout << "Press any button to close this window..." << std::endl;
+	std::cin.get();
 
 	return 0;
 }
