@@ -26,7 +26,9 @@ void TopTracker::on_action(PlayerAction::PlayerId player_id, PlayerAction::Type 
 void TopTracker::delete_old_actions() noexcept(noexcept(std::declval<PlayerAction>().get_time_stamp()))
 {
 #ifdef _DEBUG
+	std::unique_lock debug_lock(mtx);
 	bool const actions_sorted = std::ranges::is_sorted(this->actions, std::less<>(), &PlayerAction::get_time_stamp);
+	debug_lock.unlock();
 	assert(("Member 'actions' in TopTracker must be auto-sorted by time_stamp", actions_sorted));
 #endif // _DEBUG
 
