@@ -11,7 +11,7 @@ TopTracker::TopTracker(std::chrono::seconds timeout, std::size_t actions_max_cou
 	assert(("Argument 'actions_max_count' in constructor of TopTracker must not be zero", actions_max_count > 0));
 }
 
-void TopTracker::on_action(PlayerAction::PlayerId player_id, PlayerAction::Type action_type) noexcept(std::is_nothrow_constructible_v<PlayerAction, PlayerAction::PlayerId, PlayerAction::Type>)
+void TopTracker::on_action(PlayerAction::PlayerId player_id, PlayerAction::Type action_type) noexcept
 {
 	assert(("Member 'actions_max_count' in TopTracker must not be zero", this->actions_max_count > 0));
 
@@ -27,8 +27,8 @@ void TopTracker::delete_old_actions() noexcept(noexcept(std::declval<PlayerActio
 {
 #ifdef _DEBUG
 	bool const actions_sorted = std::ranges::is_sorted(this->actions, std::less<>(), &PlayerAction::get_time_stamp);
-#endif // _DEBUG
 	assert(("Member 'actions' in TopTracker must be auto-sorted by time_stamp", actions_sorted));
+#endif // _DEBUG
 
 	const PlayerAction::TimeStamp expiration_timepoint = PlayerAction::Clock::now() - this->timeout;
 
@@ -45,10 +45,13 @@ void TopTracker::delete_old_actions() noexcept(noexcept(std::declval<PlayerActio
 
 const std::deque<PlayerAction>& TopTracker::get_actions_view() const noexcept
 {
-	return std::ignore = std::lock_guard(mtx), this->actions;
+	return this->actions;
 }
 
 std::vector<PlayerAction> TopTracker::get_actions_copy() const noexcept(std::is_nothrow_copy_constructible_v<PlayerAction>)
 {
-	return std::ignore = std::lock_guard(mtx), this->actions | std::ranges::to<std::vector>();
+	std::unique_lock lock(mtx);
+	std::vector<PlayerAction> vector_copy(this->actions.begin(), this->actions.end());
+	lock.unlock();
+	return vector_copy;
 }

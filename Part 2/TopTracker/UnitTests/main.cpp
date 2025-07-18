@@ -17,13 +17,13 @@ namespace test
 	{
 		static void print_test_passed(std::string_view msg) noexcept
 		{
-			static constexpr std::string_view SUCCESS_FMT = "\033[32m[OK]   \033[0m{}\n\r";
+			static constexpr std::string_view SUCCESS_FMT = "\033[32m[OK]   \033[0m{}\n";
 			std::clog << std::format(SUCCESS_FMT, msg);
 		}
 
 		static void print_test_failed(std::string_view msg) noexcept
 		{
-			static constexpr std::string_view FAIL_FMT = "\033[31m[FAIL] \033[0m{}\n\r";
+			static constexpr std::string_view FAIL_FMT = "\033[31m[FAIL] \033[0m{}\n";
 			std::cerr << std::format(FAIL_FMT, msg);
 		}
 	}
@@ -200,7 +200,7 @@ namespace test
 		static void monotonic_timestamps()
 		{
 			TopTracker tracker(std::chrono::seconds{10}, 10);
-			for (int i = 0; i < 5; ++i)
+			for (PlayerAction::PlayerId i = 0; i < PlayerAction::PlayerId(5); ++i)
 			{
 				tracker.on_action(i, PlayerAction::Type::BUY);
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -289,7 +289,7 @@ namespace test
 				print_test_failed("Copy and view getters return different actions");
 		}
 	
-		static void thread_unsafe_append()
+		static void concurrent_on_action()
 		{
 			constexpr int thread_count = 8;
 			constexpr int actions_per_thread = 1000;
@@ -297,37 +297,36 @@ namespace test
 			TopTracker tracker(std::chrono::seconds{60}, thread_count * actions_per_thread);
 
 			std::atomic<bool> failed = false;
-			std::vector<std::thread> threads;
-
-			for (int i = 0; i < thread_count; ++i)
 			{
-				threads.emplace_back([&, i]
-				{
-					for (int j = 0; j < actions_per_thread; ++j)
-					{
-						try
-						{
-							tracker.on_action(i, PlayerAction::Type::WIN);
-						}
-						catch (...)
-						{
-							failed = true;
-						}
-					}
-				});
-			}
+				std::vector<std::jthread> threads;
 
-			for (auto& t : threads)
-				t.join();
+				for (PlayerAction::PlayerId i = 0; i < PlayerAction::PlayerId(thread_count); ++i)
+				{
+					threads.emplace_back([&, i]
+					{
+						for (int j = 0; j < actions_per_thread; ++j)
+						{
+							try
+							{
+								tracker.on_action(i, PlayerAction::Type::WIN);
+							}
+							catch (...)
+							{
+								failed = true;
+							}
+						}
+					});
+				}
+			}
 
 			// Простой sanity check: либо всё добавлено, либо нет
 			const auto& v = tracker.get_actions_view();
 			bool correct_size = v.size() == static_cast<size_t>(thread_count * actions_per_thread);
 
 			if (!failed && correct_size)
-				print_test_passed("Multithreaded append worked (threadsafe)");
+				print_test_passed("Multithreaded on action worked (threadsafe)");
 			else
-				print_test_failed("Multithreaded append failed (not threadsafe)");
+				print_test_failed("Multithreaded on action failed (not threadsafe)");
 		}
 
 		static constexpr std::array TESTS
@@ -335,7 +334,7 @@ namespace test
 			basic_insertion, capacity_limit, timeout_cleanup, 
 			action_ordering, copy_interface, monotonic_timestamps,
 			duplicate_actions_allowed, delete_old_actions_keeps_fresh,
-			get_copy_equals_view, thread_unsafe_append
+			get_copy_equals_view, concurrent_on_action
 		};
 	}
 }
