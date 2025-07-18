@@ -329,12 +329,59 @@ namespace test
 				print_test_failed("Multithreaded on action failed (not threadsafe)");
 		}
 
+		static void concurrent_delete_and_insert()
+		{
+			TopTracker tracker(std::chrono::seconds{1}, 1000);
+
+			std::atomic<bool> failed = false;
+
+			std::jthread inserter([&]
+			{
+				for (int i = 0; i < 500; ++i)
+				{
+					try
+					{
+						tracker.on_action(i, PlayerAction::Type::SELL);
+						std::this_thread::sleep_for(std::chrono::milliseconds(1));
+					}
+					catch (...)
+					{
+						failed = true;
+					}
+				}
+			});
+
+			std::jthread cleaner([&]
+			{
+				for (int i = 0; i < 100; ++i)
+				{
+					try
+					{
+						tracker.delete_old_actions();
+						std::this_thread::sleep_for(std::chrono::milliseconds(5));
+					}
+					catch (...)
+					{
+						failed = true;
+					}
+				}
+			});
+
+			inserter.join();
+			cleaner.join();
+
+			if (!failed)
+				print_test_passed("Concurrent insert/delete does not break");
+			else
+				print_test_failed("Concurrent insert/delete failed");
+		}
+
 		static constexpr std::array TESTS
 		{
 			basic_insertion, capacity_limit, timeout_cleanup, 
 			action_ordering, copy_interface, monotonic_timestamps,
 			duplicate_actions_allowed, delete_old_actions_keeps_fresh,
-			get_copy_equals_view, concurrent_on_action
+			get_copy_equals_view, concurrent_on_action, concurrent_delete_and_insert
 		};
 	}
 }
